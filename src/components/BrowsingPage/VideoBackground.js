@@ -1,0 +1,24 @@
+import React, { useEffect } from "react";
+import { API_OPTIONS } from "../../utils/constants";
+import useMovieTrailer from "../../hooks/useMovieTrailer";
+import { useSelector } from "react-redux";
+
+const VideoBackground = ({ movieId }) => {
+
+  useMovieTrailer(movieId);
+  const trailerVideo = useSelector((store) => store.movies.trailerVideos?.[movieId]);
+  console.log("Trailer Video in VideoBackground: ", trailerVideo);
+
+  return (
+    <div className="absolute top-0 left-0 w-full h-full -z-10">
+      <iframe className= "w-full h-full object-cover aspect-video"
+        src={`https://www.youtube.com/embed/${trailerVideo?.key}?&autoplay=1&mute=1&loop=1&playlist=${trailerVideo?.key}&controls=0&modestbranding=1`}
+        title="YouTube video player"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+
+      ></iframe>
+    </div>
+  );
+};
+
+export default VideoBackground;

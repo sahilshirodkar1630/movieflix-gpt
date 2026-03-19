@@ -1,5 +1,9 @@
-import React, { useRef, useState } from "react";
-import { createUserWithEmailAndPassword ,signInWithEmailAndPassword, updateProfile} from "firebase/auth";
+import  { useRef, useState } from "react";
+import { 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, 
+  updateProfile
+} from "firebase/auth";
 import Header from "./Header";
 import { checkValidData } from "../utils/validate";
 import { auth } from "../utils/firebase";
@@ -10,68 +14,63 @@ import { APP_IMG_BG_URL, PROFILE_BLUE_LOGO } from "../utils/constants";
 const Login = () => {
   const [isSignInForm, SetIsSignInForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+
   const dispatch = useDispatch();
 
   const name = useRef(null);
   const email = useRef(null);
   const password = useRef(null);
+    // 🔹 Handle Sign Up
+  const handleSignUp = async () => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      );
+
+      const user = userCredential.user;
+
+      await updateProfile(user, {
+        displayName: name.current.value,
+        photoURL: PROFILE_BLUE_LOGO,
+      });
+
+      const { uid, email: userEmail, displayName, photoURL } = auth.currentUser;
+
+      dispatch(addUser({ uid, email: userEmail, displayName, photoURL: photoURL || PROFILE_BLUE_LOGO}));
+    } catch (error) {
+      setErrorMessage(error.code + " - " + error.message);
+    }
+  };
+
+  // 🔹 Handle Sign In
+  const handleSignIn = async () => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      );
+
+      console.log("Signed in:", userCredential.user);
+    } catch (error) {
+      setErrorMessage(error.code + " - " + error.message);
+    }
+  };
 
   const handleButtonClick = () => {
     // Validate Form Data
     const message = checkValidData(email.current.value, password.current.value);
     setErrorMessage(message);
-
-
     if (message) return;
 
+
     //Sign In / Sign Up logic
-    if (!isSignInForm) {
-      // Sign Up logic
-      createUserWithEmailAndPassword(
-        auth,
-        email.current.value,
-        password.current.value,
-      )
-        .then((userCredential) => {
-          // Signed up
-          const user = userCredential.user;
-          updateProfile(user, {
-            displayName: name.current.value, photoURL: {PROFILE_BLUE_LOGO}
-          }).then(() => {
-            const {uid,email,displayName,photoURL} = auth.currentUser;
-            dispatch(
-              addUser({uid:uid,email:email,displayName:displayName,photoURL:photoURL})
-            );
-          }).catch((error) => {
-            // An error occurred
-            // ...
-            setErrorMessage(error.message)
-          });
-          console.log(user);
-          // ...
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          setErrorMessage(errorCode +" - "+errorMessage)
-          // ..
-        });
-    } else {
-      //Sign In Logic
-      signInWithEmailAndPassword(auth, email.current.value, password.current.value)
-        .then((userCredential) => {
-          // Signed in 
-          const user = userCredential.user;
-          console.log(user)
-          // ...
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          setErrorMessage(errorCode +" - "+errorMessage)
-        });
-    }
+   
+    isSignInForm ? handleSignIn() : handleSignUp();
   };
+
 
   const toggleSignInForm = () => {
     SetIsSignInForm(!isSignInForm);
@@ -82,14 +81,16 @@ const Login = () => {
     <div className="h-screen w-full m-0 overflow-hidden">
       <Header />
 
-      <div className="absolute ">
+      {/* Background */}
+      <div className="absolute inset-0">
         <img 
-        className="h-screen object-cover"
+        className="w-full h-full object-cover"
           src={APP_IMG_BG_URL}
           alt="logo"
         />
       </div>
 
+      {/* Form */}
       <form
         onSubmit={(e) => e.preventDefault()}
         className="absolute w-full md:w-3/12 py-12 px-12 bg-black my-36 mx-auto right-0 left-0 text-white rounded-lg bg-opacity-80"
@@ -105,6 +106,7 @@ const Login = () => {
             className="p-4 my-4 w-full bg-gray-800"
           />
         )}
+
         <input
           ref={email}
           type="text"
